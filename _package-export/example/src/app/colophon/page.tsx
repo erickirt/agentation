@@ -244,7 +244,7 @@ export default function ColophonPage() {
             </div>
             <div className="colophon-row">
               <span className="colophon-row-label">Icons</span>
-              <span className="colophon-row-value"><a href="https://dip.benji.org" target="_blank" rel="noopener noreferrer">Dip</a></span>
+              <span className="colophon-row-value"><a href="https://dip.org" target="_blank" rel="noopener noreferrer">Dip</a></span>
             </div>
             <div className="colophon-row">
               <span className="colophon-row-label" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
