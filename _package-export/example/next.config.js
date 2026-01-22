@@ -2,7 +2,7 @@
 const nextConfig = {
   output: 'export',
   // Allow importing from parent directory (the package source)
-  transpilePackages: ['@benji/feedback-tool'],
+  transpilePackages: ['agentation'],
 };
 
 module.exports = nextConfig;

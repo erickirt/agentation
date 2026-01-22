@@ -11,27 +11,65 @@ function CopyButton({ text }: { text: string }) {
   const maskId = useId();
 
   const inSequence: AnimationSequence = [
-    ['[data-part="square-front"]', { y: [0, -4] }, { duration: 0.12, ease: 'easeOut' }],
-    ['[data-part="square-back"]', { x: [0, -4] }, { at: '<', duration: 0.12, ease: 'easeOut' }],
+    [
+      '[data-part="square-front"]',
+      { y: [0, -4] },
+      { duration: 0.12, ease: "easeOut" },
+    ],
+    [
+      '[data-part="square-back"]',
+      { x: [0, -4] },
+      { at: "<", duration: 0.12, ease: "easeOut" },
+    ],
     [
       '[data-part="square-front"], [data-part="square-back"]',
-      { rx: [2, 7.25], width: [10.5, 14.5], height: [10.5, 14.5], rotate: [0, -45] },
-      { at: '<', duration: 0.12, ease: 'easeOut' },
+      {
+        rx: [2, 7.25],
+        width: [10.5, 14.5],
+        height: [10.5, 14.5],
+        rotate: [0, -45],
+      },
+      { at: "<", duration: 0.12, ease: "easeOut" },
     ],
-    ['[data-part="check"]', { opacity: [0, 1], pathOffset: [1, 0] }, { at: '-0.03', duration: 0 }],
+    [
+      '[data-part="check"]',
+      { opacity: [0, 1], pathOffset: [1, 0] },
+      { at: "-0.03", duration: 0 },
+    ],
     ['[data-part="check"]', { pathLength: [0, 1] }, { duration: 0.1 }],
   ];
 
   const outSequence: AnimationSequence = [
-    ['[data-part="check"]', { pathOffset: [0, 1] }, { duration: 0.1, ease: 'easeOut' }],
-    ['[data-part="check"]', { opacity: [1, 0], pathLength: [1, 0] }, { duration: 0 }],
+    [
+      '[data-part="check"]',
+      { pathOffset: [0, 1] },
+      { duration: 0.1, ease: "easeOut" },
+    ],
+    [
+      '[data-part="check"]',
+      { opacity: [1, 0], pathLength: [1, 0] },
+      { duration: 0 },
+    ],
     [
       '[data-part="square-front"], [data-part="square-back"]',
-      { rx: [7.25, 2], width: [14.5, 10.5], height: [14.5, 10.5], rotate: [-45, 0] },
-      { at: '+0.03', duration: 0.12, ease: 'easeOut' },
+      {
+        rx: [7.25, 2],
+        width: [14.5, 10.5],
+        height: [14.5, 10.5],
+        rotate: [-45, 0],
+      },
+      { at: "+0.03", duration: 0.12, ease: "easeOut" },
     ],
-    ['[data-part="square-front"]', { y: [-4, 0] }, { at: '<', duration: 0.12, ease: 'easeOut' }],
-    ['[data-part="square-back"]', { x: [-4, 0] }, { at: '<', duration: 0.12, ease: 'easeOut' }],
+    [
+      '[data-part="square-front"]',
+      { y: [-4, 0] },
+      { at: "<", duration: 0.12, ease: "easeOut" },
+    ],
+    [
+      '[data-part="square-back"]',
+      { x: [-4, 0] },
+      { at: "<", duration: 0.12, ease: "easeOut" },
+    ],
   ];
 
   const isFirstRender = useRef(true);
@@ -40,7 +78,11 @@ function CopyButton({ text }: { text: string }) {
   const outAnimation = useRef<ReturnType<typeof animate> | null>(null);
 
   const animateIn = async () => {
-    if (!inAnimation.current && !outAnimation.current && !hasAnimatedIn.current) {
+    if (
+      !inAnimation.current &&
+      !outAnimation.current &&
+      !hasAnimatedIn.current
+    ) {
       const animation = animate(inSequence);
       inAnimation.current = animation;
       await animation;
@@ -87,25 +129,25 @@ function CopyButton({ text }: { text: string }) {
       className="copy-button"
       title="Copy to clipboard"
       style={{
-        position: 'absolute',
-        top: '50%',
-        right: '0.75rem',
-        transform: 'translateY(-50%)',
-        padding: '0.375rem',
-        background: 'transparent',
-        border: 'none',
-        borderRadius: '0.25rem',
-        cursor: 'pointer',
-        color: 'rgba(0,0,0,0.35)',
-        transition: 'color 0.15s ease',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        position: "absolute",
+        top: "50%",
+        right: "0.75rem",
+        transform: "translateY(-50%)",
+        padding: "0.375rem",
+        background: "transparent",
+        border: "none",
+        borderRadius: "0.25rem",
+        cursor: "pointer",
+        color: "rgba(0,0,0,0.35)",
+        transition: "color 0.15s ease",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <svg
         ref={scope}
-        style={{ overflow: 'visible' }}
+        style={{ overflow: "visible" }}
         width={20}
         height={20}
         viewBox="0 0 24 24"
@@ -163,12 +205,23 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function CodeBlock({ code, language = "tsx", copyable = false }: { code: string; language?: string; copyable?: boolean }) {
+function CodeBlock({
+  code,
+  language = "tsx",
+  copyable = false,
+}: {
+  code: string;
+  language?: string;
+  copyable?: boolean;
+}) {
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: "relative" }}>
       <Highlight theme={themes.github} code={code.trim()} language={language}>
         {({ style, tokens, getLineProps, getTokenProps }) => (
-          <pre className="code-block" style={{ ...style, background: 'transparent' }}>
+          <pre
+            className="code-block"
+            style={{ ...style, background: "transparent" }}
+          >
             {tokens.map((line, i) => (
               <div key={i} {...getLineProps({ line })}>
                 {line.map((token, key) => (
@@ -188,27 +241,34 @@ export default function InstallPage() {
   return (
     <>
       <article className="article">
-      <header>
-        <h1>Installation</h1>
-        <p className="tagline">Get started with Agentation in your project</p>
-      </header>
+        <header>
+          <h1>Installation</h1>
+          <p className="tagline">Get started with Agentation in your project</p>
+        </header>
 
-      <section>
-        <h2>Install the package</h2>
-        <CodeBlock code="npm install agentation" language="bash" copyable />
-        <p style={{ fontSize: '0.875rem', color: 'rgba(0,0,0,0.5)', marginTop: '0.5rem' }}>
-          Or use yarn, pnpm, or bun.
-        </p>
-      </section>
+        <section>
+          <h2>Install the package</h2>
+          <CodeBlock code="npm install agentation" language="bash" copyable />
+          <p
+            style={{
+              fontSize: "0.875rem",
+              color: "rgba(0,0,0,0.5)",
+              marginTop: "0.5rem",
+            }}
+          >
+            Or use yarn, pnpm, or bun.
+          </p>
+        </section>
 
-      <section>
-        <h2>Add to your app</h2>
-        <p>
-          Add the component anywhere in your React app, ideally at the root level.
-          The <code>NODE_ENV</code> check ensures it only loads in development.
-        </p>
-        <CodeBlock
-          code={`import { Agentation } from "agentation";
+        <section>
+          <h2>Add to your app</h2>
+          <p>
+            Add the component anywhere in your React app, ideally at the root
+            level. The <code>NODE_ENV</code> check ensures it only loads in
+            development.
+          </p>
+          <CodeBlock
+            code={`import { Agentation } from "agentation";
 
 function App() {
   return (
@@ -218,36 +278,55 @@ function App() {
     </>
   );
 }`}
-          language="tsx"
-        />
-      </section>
+            language="tsx"
+          />
+        </section>
 
-      <section>
-        <h2>Requirements</h2>
-        <ul>
-          <li><strong>React 18+</strong> &mdash; Uses modern React features</li>
-          <li><strong>Client-side only</strong> &mdash; Requires DOM access</li>
-          <li><strong>Desktop only</strong> &mdash; Not optimized for mobile devices</li>
-          <li><strong>Zero dependencies</strong> &mdash; No runtime deps beyond React</li>
-        </ul>
-      </section>
+        <section>
+          <h2>Requirements</h2>
+          <ul>
+            <li>
+              <strong>React 18+</strong> &mdash; Uses modern React features
+            </li>
+            <li>
+              <strong>Client-side only</strong> &mdash; Requires DOM access
+            </li>
+            <li>
+              <strong>Desktop only</strong> &mdash; Not optimized for mobile
+              devices
+            </li>
+            <li>
+              <strong>Zero dependencies</strong> &mdash; No runtime deps beyond
+              React
+            </li>
+          </ul>
+        </section>
 
-      <section>
-        <h2>Security notes</h2>
-        <p>
-          Agentation runs in your browser and reads DOM content to generate feedback.
-          It does <strong>not</strong> send data anywhere &mdash; everything stays local
-          until you manually copy and paste.
-        </p>
-        <ul>
-          <li><strong>No network requests</strong> &mdash; all processing is client-side</li>
-          <li><strong>No data collection</strong> &mdash; nothing is tracked or stored remotely</li>
-          <li><strong>Dev-only</strong> &mdash; use the <code>NODE_ENV</code> check to exclude from production</li>
-        </ul>
-      </section>
-    </article>
+        <section>
+          <h2>Security notes</h2>
+          <p>
+            Agentation runs in your browser and reads DOM content to generate
+            feedback. It does <strong>not</strong> send data anywhere &mdash;
+            everything stays local until you manually copy and paste.
+          </p>
+          <ul>
+            <li>
+              <strong>No network requests</strong> &mdash; all processing is
+              client-side
+            </li>
+            <li>
+              <strong>No data collection</strong> &mdash; nothing is tracked or
+              stored remotely
+            </li>
+            <li>
+              <strong>Dev-only</strong> &mdash; use the <code>NODE_ENV</code>{" "}
+              check to exclude from production
+            </li>
+          </ul>
+        </section>
+      </article>
 
-    <Footer />
+      <Footer />
     </>
   );
 }

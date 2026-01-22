@@ -6,6 +6,7 @@ import { MobileNav } from "./MobileNav";
 import { MobileNotice } from "./MobileNotice";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://agentation.dev"),
   title: "Agentation",
   description: "The visual feedback tool for agents.",
   openGraph: {
@@ -45,9 +46,7 @@ export default function RootLayout({
         <MobileNotice />
         <MobileNav />
         <SideNav />
-        <main className="main-content">
-          {children}
-        </main>
+        <main className="main-content">{children}</main>
         <ToolbarProvider />
       </body>
     </html>
