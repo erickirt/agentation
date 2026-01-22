@@ -25,6 +25,13 @@ const badgeLabels: Record<ChangeType, string> = {
 
 const releases: Release[] = [
   {
+    version: "1.1.1",
+    date: "January 22, 2026",
+    changes: [
+      { type: "fixed", text: "React key prop warning in color picker" },
+    ],
+  },
+  {
     version: "1.1.0",
     date: "January 21, 2026",
     changes: [
