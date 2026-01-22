@@ -1,100 +1,22 @@
-# CLAUDE.md
+# Agentation
 
-## Important Notes
+Monorepo containing:
+1. **npm package** (`_package-export/`) - See `_package-export/CLAUDE.md`
+2. **Website/docs** (`_package-export/example/`) - See `_package-export/example/CLAUDE.md`
 
-**DO NOT publish the npm package until v1 is fully ready and tested.** The name `agentation` has been reserved on npm but we unpublished to avoid exposing unfinished code. Wait until we're confident in the API and functionality before publishing.
+## What is Agentation?
 
-When ready to publish:
-```bash
-cd _package-export
-npm publish
-```
-
-## Project Overview
-
-**Agentation** is a floating toolbar for annotating web pages and collecting structured feedback for AI coding agents.
-
-Core features:
-- Click anywhere to add annotations with smart element identification
-- Select text to annotate specific passages
-- Hover to see element names highlighted
-- Pause CSS animations to capture specific states
-- Copy structured markdown output for sharing with AI agents
-- Annotations persist in localStorage (7-day expiry)
-
-## Project Structure
-
-```
-agentation/
-├── _package-export/           # The npm package source
-│   ├── src/
-│   │   ├── index.ts           # Main exports
-│   │   ├── types.ts           # TypeScript types (Annotation, etc.)
-│   │   ├── components/
-│   │   │   ├── icons.tsx      # SVG icons with morph animations
-│   │   │   ├── icons-css.tsx  # CSS-only icon variants
-│   │   │   ├── annotation-popup/   # Popup for entering feedback
-│   │   │   └── page-toolbar/       # Main floating toolbar
-│   │   └── utils/
-│   │       ├── element-identification.ts  # Smart DOM element naming
-│   │       └── storage.ts                 # localStorage helpers
-│   ├── example/               # Next.js example app for testing
-│   ├── dist/                  # Built output (gitignored in real use)
-│   ├── package.json           # Currently minimal for name reservation
-│   └── PLAN.md                # Detailed refactoring roadmap
-```
-
-## Two Component Variants
-
-1. **Agentation** (default) - Uses framer-motion for smooth animations
-   ```tsx
-   import { Agentation } from 'agentation';
-   ```
-
-2. **AgentationCSS** - Zero runtime deps, CSS-only animations
-   ```tsx
-   import { AgentationCSS } from 'agentation';
-   ```
+A floating toolbar for annotating web pages and collecting structured feedback for AI coding agents.
 
 ## Development
 
-The project uses pnpm workspaces for local development with hot reloading.
-
 ```bash
-# Install all workspace dependencies (run from root)
-pnpm install
-
-# Start both watch mode and dev server
-pnpm dev
-
-# Or run separately:
-pnpm --filter agentation watch        # Watch mode for library
-pnpm --filter feedback-tool-example dev  # Dev server for example app
-
-# Build the library only
-pnpm build
+pnpm install    # Install all workspace dependencies
+pnpm dev        # Run both package watch + website dev server
+pnpm build      # Build package only
 ```
 
-The example app now imports directly from the `agentation` package via workspace linking, so changes to the library source automatically trigger rebuilds that the Next.js dev server picks up.
+## Important
 
-## Key Implementation Details
-
-- Uses SCSS modules (requires consumer to have SCSS setup, or we convert to CSS-in-JS)
-- Peer dependencies: react >=18, react-dom >=18, framer-motion >=10
-- Element identification is smart: buttons by text, headings by content, containers by class name
-- Storage key is based on pathname for per-page annotations
-
-## Before v1 Release (see PLAN.md for details)
-
-High priority:
-- [ ] Convert SCSS to CSS-in-JS or CSS variables for easier adoption
-- [ ] Add configuration props (theme, position, storage adapter)
-- [ ] Abstract storage layer for custom implementations
-
-Medium priority:
-- [ ] Export TypeScript types properly
-- [ ] Add position prop for toolbar placement
-
-Low priority:
-- [ ] Add tests
-- [ ] Consider removing framer-motion dependency option
+The npm package is public. Changes to `_package-export/src/` affect all users.
+Website changes (`_package-export/example/`) only affect agentation.dev.
