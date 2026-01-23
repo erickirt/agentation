@@ -324,66 +324,12 @@ function App() {
         </section>
 
         <section>
-          <h2>Props</h2>
-          <p>
-            The <code>Agentation</code> component accepts optional props for
-            programmatic integration:
-          </p>
-          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid rgba(0,0,0,0.1)" }}>
-                <th style={{ textAlign: "left", padding: "0.5rem 1rem 0.5rem 0" }}>Prop</th>
-                <th style={{ textAlign: "left", padding: "0.5rem 1rem 0.5rem 0" }}>Type</th>
-                <th style={{ textAlign: "left", padding: "0.5rem 0" }}>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={{ borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
-                <td style={{ padding: "0.5rem 1rem 0.5rem 0" }}><code>onAnnotationAdd</code></td>
-                <td style={{ padding: "0.5rem 1rem 0.5rem 0" }}><code>(annotation: Annotation) =&gt; void</code></td>
-                <td style={{ padding: "0.5rem 0" }}>Callback fired when an annotation is added</td>
-              </tr>
-              <tr>
-                <td style={{ padding: "0.5rem 1rem 0.5rem 0" }}><code>copyToClipboard</code></td>
-                <td style={{ padding: "0.5rem 1rem 0.5rem 0" }}><code>boolean</code></td>
-                <td style={{ padding: "0.5rem 0" }}>Whether to copy to clipboard (default: <code>true</code>)</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-
-        <section>
           <h2>Programmatic integration</h2>
           <p>
-            Use the <code>onAnnotationAdd</code> callback to receive structured
-            annotation data directly. See the <a href="/api">API page</a> for all available callbacks.
+            For developers looking to extend Agentation, see
+            the <a href="/api" className="styled-link">API documentation</a> for
+            available callbacks and props.
           </p>
-          <CodeBlock
-            code={`import { Agentation, type Annotation } from "agentation";
-
-function App() {
-  const handleAnnotation = (annotation: Annotation) => {
-    // Structured data - no parsing needed
-    console.log(annotation.element);      // "Button"
-    console.log(annotation.elementPath);  // "body > div > button"
-    console.log(annotation.boundingBox);  // { x, y, width, height }
-
-    // Send to your agent, API, etc.
-    sendToAgent(annotation);
-  };
-
-  return (
-    <>
-      <YourApp />
-      <Agentation
-        onAnnotationAdd={handleAnnotation}
-        copyToClipboard={false}  // Skip clipboard if handling via callback
-      />
-    </>
-  );
-}`}
-            language="tsx"
-          />
         </section>
 
         <section>
