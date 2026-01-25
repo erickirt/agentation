@@ -118,11 +118,13 @@ $green: #34c759;
 @keyframes tooltipIn {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(2px) scale(0.98);
+    // 0.891 = 0.98 * 0.909 (animation start × counter-scale)
+    transform: translateX(-50%) translateY(2px) scale(0.891);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1);
+    // 0.909 = 1/1.1 counter-scale to offset parent marker's hover scale
+    transform: translateX(-50%) translateY(0) scale(0.909);
   }
 }
 
@@ -858,11 +860,21 @@ $green: #34c759;
   position: absolute;
   top: calc(100% + 10px);
   left: 50%;
-  transform: translateX(-50%);
+  // Counter-scale to offset the parent marker's 1.1x hover scale
+  transform: translateX(-50%) scale(0.909);
   z-index: 100002;
   background: #1a1a1a;
-  padding: 0.625rem 0.75rem;
+  padding: 8px 0.75rem;
   border-radius: 0.75rem;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-weight: 400;
+  color: #fff;
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.08);
@@ -878,10 +890,10 @@ $green: #34c759;
 
 .markerQuote {
   display: block;
-  font-size: 0.6875rem;
+  font-size: 12px;
   font-style: italic;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 0.375rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.3125rem;
   line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
@@ -890,8 +902,8 @@ $green: #34c759;
 
 .markerNote {
   display: block;
-  font-size: 0.75rem;
-  font-weight: 450;
+  font-size: 13px;
+  font-weight: 400;
   line-height: 1.4;
   color: #fff;
   white-space: nowrap;
@@ -904,7 +916,7 @@ $green: #34c759;
   display: block;
   font-size: 0.625rem;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.6);
   margin-top: 0.375rem;
   white-space: nowrap;
 }
