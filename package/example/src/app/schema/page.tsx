@@ -35,7 +35,7 @@ export default function SchemaPage() {
         <section>
           <h2 id="overview">Overview</h2>
           <p>
-            The Annotation Format Schema (AFS) is an open format for capturing UI feedback
+            The Annotation Format Schema (AFS) is an open format created and used by Agentation for capturing UI feedback
             in a way that AI coding agents can reliably parse and act on. Think
             of it like <strong>smart Figma comments for your running app</strong> &mdash; persistent
             annotations attached to specific elements, with threads, status tracking,
