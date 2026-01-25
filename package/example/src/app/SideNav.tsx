@@ -439,7 +439,7 @@ export function SideNav() {
     },
     { href: "/api", label: "API" },
     { href: "/webhooks", label: "Webhooks" },
-    { section: "More" },
+    { section: "Resources" },
     { href: "/changelog", label: "Changelog" },
     { href: "/faq", label: "FAQ" },
   ];
