@@ -1,6 +1,6 @@
 {
   "buildCommand": "pnpm build && cd _package-export/example && pnpm build",
-  "outputDirectory": "_package-export/example/.next",
+  "outputDirectory": "_package-export/example/out",
   "framework": null,
   "installCommand": "pnpm install"
 }
