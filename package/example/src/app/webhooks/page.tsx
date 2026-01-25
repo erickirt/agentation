@@ -88,7 +88,7 @@ function App() {
 
           <h3 style={{ marginTop: "1.5rem" }}>Event-specific payloads</h3>
           <p style={{ fontSize: "0.8125rem", color: "rgba(0,0,0,0.65)" }}>
-            <strong>annotation.add / annotation.delete / annotation.update</strong>
+            <code>annotation.add</code> / <code>annotation.delete</code> / <code>annotation.update</code>
           </p>
           <CodeBlock
             language="json"
@@ -101,7 +101,7 @@ function App() {
           />
 
           <p style={{ marginTop: "1rem", fontSize: "0.8125rem", color: "rgba(0,0,0,0.65)" }}>
-            <strong>annotations.clear</strong>
+            <code>annotations.clear</code>
           </p>
           <CodeBlock
             language="json"
@@ -114,7 +114,7 @@ function App() {
           />
 
           <p style={{ marginTop: "1rem", fontSize: "0.8125rem", color: "rgba(0,0,0,0.65)" }}>
-            <strong>submit</strong>
+            <code>submit</code>
           </p>
           <CodeBlock
             language="json"
