@@ -137,6 +137,7 @@ type ToolbarSettings = {
   reactEnabled: boolean; // Simple toggle - mode derived from outputDetail
   agentMode: AgentMode;
   markerClickBehavior: MarkerClickBehavior;
+  webhooksEnabled: boolean;
 };
 
 const DEFAULT_SETTINGS: ToolbarSettings = {
@@ -147,6 +148,7 @@ const DEFAULT_SETTINGS: ToolbarSettings = {
   reactEnabled: true,
   agentMode: "manual",
   markerClickBehavior: "edit",
+  webhooksEnabled: true,
 };
 
 // Maps output detail level to React detection mode
@@ -405,6 +407,8 @@ export type PageFeedbackToolbarCSSProps = {
   onAnnotationsClear?: (annotations: Annotation[]) => void;
   /** Callback fired when the copy button is clicked. Receives the markdown output. */
   onCopy?: (markdown: string) => void;
+  /** Callback fired when "Send to Agent" is clicked. Receives the markdown output and annotations. */
+  onSubmit?: (output: string, annotations: Annotation[]) => void;
   /** Whether to copy to clipboard when the copy button is clicked. Defaults to true. */
   copyToClipboard?: boolean;
   /** Server URL for sync (e.g., "http://localhost:4747"). If not provided, uses localStorage only. */
@@ -413,6 +417,8 @@ export type PageFeedbackToolbarCSSProps = {
   sessionId?: string;
   /** Called when a new session is created (only when endpoint is provided without sessionId). */
   onSessionCreated?: (sessionId: string) => void;
+  /** Webhook URL to receive annotation events. */
+  webhookUrl?: string;
 };
 
 /** Alias for PageFeedbackToolbarCSSProps */
@@ -431,10 +437,12 @@ export function PageFeedbackToolbarCSS({
   onAnnotationUpdate,
   onAnnotationsClear,
   onCopy,
+  onSubmit,
   copyToClipboard = true,
   endpoint,
   sessionId: initialSessionId,
   onSessionCreated,
+  webhookUrl,
 }: PageFeedbackToolbarCSSProps = {}) {
   const [isActive, setIsActive] = useState(false);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
@@ -1629,6 +1637,29 @@ export function PageFeedbackToolbarCSS({
     return () => document.removeEventListener("mouseup", handleMouseUp);
   }, [isActive, isDragging]);
 
+  // Fire webhook for annotation events
+  const fireWebhook = useCallback(
+    async (event: string, payload: Record<string, unknown>) => {
+      if (!webhookUrl || !settings.webhooksEnabled) return;
+
+      try {
+        await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event,
+            timestamp: Date.now(),
+            url: typeof window !== "undefined" ? window.location.href : undefined,
+            ...payload,
+          }),
+        });
+      } catch (error) {
+        console.warn("[Agentation] Webhook failed:", error);
+      }
+    },
+    [webhookUrl, settings.webhooksEnabled],
+  );
+
   // Add annotation
   const addAnnotation = useCallback(
     (comment: string) => {
@@ -1676,6 +1707,7 @@ export function PageFeedbackToolbarCSS({
 
       // Fire callback
       onAnnotationAdd?.(newAnnotation);
+      fireWebhook("annotation.add", { annotation: newAnnotation });
 
       // Animate out the pending annotation UI
       setPendingExiting(true);
@@ -1711,7 +1743,7 @@ export function PageFeedbackToolbarCSS({
           });
       }
     },
-    [pendingAnnotation, onAnnotationAdd, endpoint, currentSessionId],
+    [pendingAnnotation, onAnnotationAdd, fireWebhook, endpoint, currentSessionId],
   );
 
   // Cancel annotation with exit animation
@@ -1740,6 +1772,7 @@ export function PageFeedbackToolbarCSS({
       // Fire callback
       if (deletedAnnotation) {
         onAnnotationDelete?.(deletedAnnotation);
+        fireWebhook("annotation.delete", { annotation: deletedAnnotation });
       }
 
       // Sync delete to server (non-blocking)
@@ -1766,7 +1799,7 @@ export function PageFeedbackToolbarCSS({
         }
       }, 150);
     },
-[annotations, editingAnnotation, onAnnotationDelete, endpoint],
+[annotations, editingAnnotation, onAnnotationDelete, fireWebhook, endpoint],
   );
 
   // Start editing an annotation (right-click)
@@ -1790,6 +1823,7 @@ export function PageFeedbackToolbarCSS({
 
       // Fire callback
       onAnnotationUpdate?.(updatedAnnotation);
+      fireWebhook("annotation.update", { annotation: updatedAnnotation });
 
       // Sync update to server (non-blocking)
       if (endpoint) {
@@ -1805,7 +1839,7 @@ export function PageFeedbackToolbarCSS({
         setEditExiting(false);
       }, 150);
     },
-    [editingAnnotation, onAnnotationUpdate, endpoint],
+    [editingAnnotation, onAnnotationUpdate, fireWebhook, endpoint],
   );
 
   // Cancel editing with exit animation
@@ -1824,6 +1858,7 @@ export function PageFeedbackToolbarCSS({
 
     // Fire callback with all annotations before clearing
     onAnnotationsClear?.(annotations);
+    fireWebhook("annotations.clear", { annotations });
 
     // Sync deletions to server (non-blocking)
     if (endpoint) {
@@ -1848,7 +1883,7 @@ export function PageFeedbackToolbarCSS({
     }, totalAnimationTime);
 
     setTimeout(() => setCleared(false), 1500);
-  }, [pathname, annotations, onAnnotationsClear, endpoint]);
+  }, [pathname, annotations, onAnnotationsClear, fireWebhook, endpoint]);
 
   // Copy output
   const copyOutput = useCallback(async () => {
@@ -1889,10 +1924,24 @@ export function PageFeedbackToolbarCSS({
 
   // Send to agent (triggers action.requested event)
   const sendToAgent = useCallback(async () => {
-    if (!endpoint || !currentSessionId || connectionStatus !== "connected") return;
-
     const output = generateOutput(annotations, pathname, settings.outputDetail, effectiveReactMode);
     if (!output) return;
+
+    // Fire onSubmit callback regardless of server connection
+    if (onSubmit) {
+      onSubmit(output, annotations);
+    }
+    fireWebhook("submit", { output, annotations });
+
+    // Continue with server request if configured
+    if (!endpoint || !currentSessionId || connectionStatus !== "connected") {
+      // If we fired onSubmit, show success feedback
+      if (onSubmit) {
+        setSent(true);
+        setTimeout(() => setSent(false), 2500);
+      }
+      return;
+    }
 
     try {
       const response = await requestAction(endpoint, currentSessionId, output);
@@ -1912,6 +1961,8 @@ export function PageFeedbackToolbarCSS({
       console.warn("[Agentation] Failed to send to agent:", error);
     }
   }, [
+    onSubmit,
+    fireWebhook,
     endpoint,
     currentSessionId,
     connectionStatus,
@@ -2274,8 +2325,8 @@ export function PageFeedbackToolbarCSS({
               </span>
             </div>
 
-            {/* Sync button - auto-synced state for Claude Code, clickable for Manual/Custom */}
-            <div className={`${styles.buttonWrapper} ${styles.sendButtonWrapper} ${effectiveConnectionStatus === "connected" ? styles.sendButtonVisible : ""}`}>
+            {/* Sync button - auto-synced state for Claude Code, clickable for Manual/Custom/onSubmit */}
+            <div className={`${styles.buttonWrapper} ${styles.sendButtonWrapper} ${effectiveConnectionStatus === "connected" || onSubmit ? styles.sendButtonVisible : ""}`}>
               <button
                 className={`${styles.controlButton} ${!isDarkMode ? styles.light : ""}`}
                 onClick={(e) => {
@@ -2288,7 +2339,7 @@ export function PageFeedbackToolbarCSS({
                 data-active={sent || settings.agentMode === "claude-code"}
                 data-auto-sync={settings.agentMode === "claude-code"}
                 data-failed={sendFailed}
-                tabIndex={effectiveConnectionStatus === "connected" ? 0 : -1}
+                tabIndex={effectiveConnectionStatus === "connected" || onSubmit ? 0 : -1}
               >
                 <IconSendAnimated size={24} sent={sent || settings.agentMode === "claude-code"} />
                 {hasAnnotations && !sent && !sendFailed && settings.agentMode !== "claude-code" && (
@@ -2659,6 +2710,30 @@ export function PageFeedbackToolbarCSS({
                   </span>
                 </button>
               </div>
+
+              {webhookUrl && (
+                <div className={styles.settingsRow} style={{ marginTop: 4 }}>
+                  <div
+                    className={`${styles.settingsLabel} ${!isDarkMode ? styles.light : ""}`}
+                  >
+                    Webhooks
+                    <span
+                      className={styles.helpIcon}
+                      data-tooltip="Send annotation events to configured webhook URL"
+                    >
+                      <IconHelp size={20} />
+                    </span>
+                  </div>
+                  <label className={styles.toggleSwitch}>
+                    <input
+                      type="checkbox"
+                      checked={settings.webhooksEnabled}
+                      onChange={() => setSettings((s) => ({ ...s, webhooksEnabled: !s.webhooksEnabled }))}
+                    />
+                    <span className={styles.toggleSlider} />
+                  </label>
+                </div>
+              )}
 
               {/* Session Switcher - only show when connected */}
               {endpoint && connectionStatus === "connected" && (

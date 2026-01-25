@@ -67,11 +67,25 @@ export default function APIPage() {
             </div>
             <div className="prop-item">
               <div className="prop-header">
+                <code className="prop-name">onSubmit</code>
+                <span className="prop-type">(output: string, annotations: Annotation[]) =&gt; void</span>
+              </div>
+              <p className="prop-desc">Called when "Send to Agent" is clicked. See <a href="/webhooks">Webhooks</a> for details.</p>
+            </div>
+            <div className="prop-item">
+              <div className="prop-header">
                 <code className="prop-name">copyToClipboard</code>
                 <span className="prop-type">boolean</span>
                 <span className="prop-default">default: true</span>
               </div>
               <p className="prop-desc">Set to false to prevent writing to clipboard (if handling via onCopy)</p>
+            </div>
+            <div className="prop-item">
+              <div className="prop-header">
+                <code className="prop-name">webhookUrl</code>
+                <span className="prop-type">string</span>
+              </div>
+              <p className="prop-desc">URL to receive POST requests on annotation events. See <a href="/webhooks">Webhooks</a> for details.</p>
             </div>
           </div>
         </section>
