@@ -1131,6 +1131,21 @@ export function PageFeedbackToolbarCSS({
       [data-feedback-toolbar], [data-feedback-toolbar] * {
         cursor: default !important;
       }
+      [data-feedback-toolbar] textarea,
+      [data-feedback-toolbar] input[type="text"],
+      [data-feedback-toolbar] input[type="url"] {
+        cursor: text !important;
+      }
+      [data-feedback-toolbar] button,
+      [data-feedback-toolbar] button *,
+      [data-feedback-toolbar] label,
+      [data-feedback-toolbar] label *,
+      [data-feedback-toolbar] a,
+      [data-feedback-toolbar] a *,
+      [data-feedback-toolbar] [role="button"],
+      [data-feedback-toolbar] [role="button"] * {
+        cursor: pointer !important;
+      }
       [data-annotation-marker], [data-annotation-marker] * {
         cursor: pointer !important;
       }
@@ -2660,6 +2675,7 @@ export function PageFeedbackToolbarCSS({
                 {COLOR_OPTIONS.map((color) => (
                   <div
                     key={color.value}
+                    role="button"
                     onClick={() =>
                       setSettings((s) => ({
                         ...s,

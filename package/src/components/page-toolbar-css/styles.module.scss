@@ -986,6 +986,7 @@ $green: #34c759;
   border-radius: 1rem;
   padding: 13px 0 16px;
   min-width: 205px;
+  cursor: default;
   box-shadow:
     0 1px 8px rgba(0, 0, 0, 0.25),
     0 0 0 1px rgba(0, 0, 0, 0.04);
@@ -1282,6 +1283,8 @@ $green: #34c759;
   color: #fff;
   outline: none;
   resize: none;
+  cursor: text !important;
+  user-select: text;
   transition:
     border-color 0.15s ease,
     background 0.15s ease;
@@ -1770,6 +1773,7 @@ $green: #34c759;
   width: 24px;
   height: 16px;
   flex-shrink: 0;
+  cursor: pointer;
 
   input {
     opacity: 0;
