@@ -23,7 +23,7 @@ import {
   IconEyeMinus,
   IconCopyAlt,
   IconCopyAnimated,
-  IconSendAnimated,
+  IconSendArrow,
   IconTrashAlt,
   IconXmark,
   IconCheckmark,
@@ -449,7 +449,7 @@ export function PageFeedbackToolbarCSS({
     reactComponents?: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [sendState, setSendState] = useState<"idle" | "sending" | "sent" | "failed">("idle");
   const [cleared, setCleared] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [hoveredMarkerId, setHoveredMarkerId] = useState<string | null>(null);
@@ -1622,15 +1622,15 @@ export function PageFeedbackToolbarCSS({
     return () => document.removeEventListener("mouseup", handleMouseUp);
   }, [isActive, isDragging]);
 
-  // Fire webhook for annotation events
+  // Fire webhook for annotation events - returns true on success, false on failure
   const fireWebhook = useCallback(
-    async (event: string, payload: Record<string, unknown>) => {
+    async (event: string, payload: Record<string, unknown>): Promise<boolean> => {
       // Settings webhookUrl overrides prop
       const targetUrl = settings.webhookUrl || webhookUrl;
-      if (!targetUrl || !settings.webhooksEnabled) return;
+      if (!targetUrl || !settings.webhooksEnabled) return false;
 
       try {
-        await fetch(targetUrl, {
+        const response = await fetch(targetUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1641,8 +1641,10 @@ export function PageFeedbackToolbarCSS({
             ...payload,
           }),
         });
+        return response.ok;
       } catch (error) {
         console.warn("[Agentation] Webhook failed:", error);
+        return false;
       }
     },
     [webhookUrl, settings.webhookUrl, settings.webhooksEnabled],
@@ -1933,16 +1935,8 @@ export function PageFeedbackToolbarCSS({
     onCopy,
   ]);
 
-  // Track delivery status for better feedback
-  const [lastDelivery, setLastDelivery] = useState<{
-    total: number;
-    sseListeners: number;
-    webhooks: number;
-  } | null>(null);
-  const [sendFailed, setSendFailed] = useState(false);
-
-  // Send to agent (triggers action.requested event)
-  const sendToAgent = useCallback(async () => {
+  // Send to webhook
+  const sendToWebhook = useCallback(async () => {
     const output = generateOutput(
       annotations,
       pathname,
@@ -1951,45 +1945,26 @@ export function PageFeedbackToolbarCSS({
     );
     if (!output) return;
 
-    // Fire onSubmit callback regardless of server connection
+    // Fire onSubmit callback
     if (onSubmit) {
       onSubmit(output, annotations);
     }
-    fireWebhook("submit", { output, annotations });
 
-    // Continue with server request if configured
-    if (!endpoint || !currentSessionId || connectionStatus !== "connected") {
-      // If we fired onSubmit, show success feedback
-      if (onSubmit) {
-        setSent(true);
-        setTimeout(() => setSent(false), 2500);
-      }
-      return;
-    }
+    // Start sending (arrow fades)
+    setSendState("sending");
 
-    try {
-      const response = await requestAction(endpoint, currentSessionId, output);
-      setLastDelivery(response.delivered);
-      // Only animate checkmark if something received the action
-      if (response.delivered.total > 0) {
-        setSent(true);
-      } else {
-        setSendFailed(true);
-      }
-      setTimeout(() => {
-        setSent(false);
-        setSendFailed(false);
-        setLastDelivery(null);
-      }, 2500);
-    } catch (error) {
-      console.warn("[Agentation] Failed to send to agent:", error);
-    }
+    // Brief delay for the fade effect
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    // Fire webhook and check result
+    const success = await fireWebhook("submit", { output, annotations });
+
+    // Show result
+    setSendState(success ? "sent" : "failed");
+    setTimeout(() => setSendState("idle"), 2500);
   }, [
     onSubmit,
     fireWebhook,
-    endpoint,
-    currentSessionId,
-    connectionStatus,
     annotations,
     pathname,
     settings.outputDetail,
@@ -2355,23 +2330,23 @@ export function PageFeedbackToolbarCSS({
               </span>
             </div>
 
-            {/* Send button */}
+            {/* Send button - only enabled when webhook URL is available */}
             <div
-              className={`${styles.buttonWrapper} ${styles.sendButtonWrapper} ${connectionStatus === "connected" || onSubmit ? styles.sendButtonVisible : ""}`}
+              className={`${styles.buttonWrapper} ${styles.sendButtonWrapper} ${settings.webhookUrl || webhookUrl ? styles.sendButtonVisible : ""}`}
             >
               <button
                 className={`${styles.controlButton} ${!isDarkMode ? styles.light : ""}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  sendToAgent();
+                  sendToWebhook();
                 }}
-                disabled={!hasAnnotations}
-                data-active={sent}
-                data-failed={sendFailed}
-                tabIndex={connectionStatus === "connected" || onSubmit ? 0 : -1}
+                disabled={!hasAnnotations || !(settings.webhookUrl || webhookUrl) || sendState === "sending"}
+                data-active={sendState === "sent"}
+                data-error={sendState === "failed"}
+                tabIndex={settings.webhookUrl || webhookUrl ? 0 : -1}
               >
-                <IconSendAnimated size={24} sent={sent} />
-                {hasAnnotations && !sent && !sendFailed && (
+                <IconSendArrow size={24} state={sendState} />
+                {hasAnnotations && sendState === "idle" && (
                   <span
                     className={`${styles.buttonBadge} ${!isDarkMode ? styles.light : ""}`}
                   >
@@ -2380,9 +2355,9 @@ export function PageFeedbackToolbarCSS({
                 )}
               </button>
               <span
-                className={`${styles.buttonTooltip} ${sent || sendFailed ? styles.tooltipVisible : ""}`}
+                className={`${styles.buttonTooltip} ${sendState === "sent" || sendState === "failed" ? styles.tooltipVisible : ""}`}
               >
-                {sendFailed ? "No listeners" : sent ? "Sent!" : "Send to agent"}
+                {sendState === "sent" ? "Sent!" : sendState === "failed" ? "Failed" : "Send to webhook"}
               </span>
             </div>
 

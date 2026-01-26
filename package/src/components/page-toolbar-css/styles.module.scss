@@ -361,7 +361,7 @@ $green: #34c759;
 
   &:hover:not(:disabled):not([data-active="true"]):not(
       [data-failed="true"]
-    ):not([data-auto-sync="true"]) {
+    ):not([data-auto-sync="true"]):not([data-error="true"]) {
     background: rgba(255, 255, 255, 0.12);
     color: #fff;
   }
@@ -378,6 +378,11 @@ $green: #34c759;
   &[data-active="true"] {
     color: $blue;
     background: rgba($blue, 0.25);
+  }
+
+  &[data-error="true"] {
+    color: $red;
+    background: rgba($red, 0.25);
   }
 
   &[data-danger]:hover:not(:disabled):not([data-active="true"]):not(
@@ -1723,7 +1728,7 @@ $green: #34c759;
 
     &:hover:not(:disabled):not([data-active="true"]):not(
         [data-failed="true"]
-      ):not([data-auto-sync="true"]) {
+      ):not([data-auto-sync="true"]):not([data-error="true"]) {
       background: rgba(0, 0, 0, 0.06);
       color: rgba(0, 0, 0, 0.85);
     }
@@ -1731,6 +1736,11 @@ $green: #34c759;
     &[data-active="true"] {
       color: $blue;
       background: rgba($blue, 0.15);
+    }
+
+    &[data-error="true"] {
+      color: $red;
+      background: rgba($red, 0.15);
     }
 
     &[data-danger]:hover:not(:disabled):not([data-active="true"]):not(

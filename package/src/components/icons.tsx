@@ -219,6 +219,86 @@ export const IconCopyAnimated = ({ size = 24, copied = false }: { size?: number;
   </svg>
 );
 
+// Animated send arrow icon (paper plane style with checkmark/error transition)
+export const IconSendArrow = ({
+  size = 24,
+  state = "idle"
+}: {
+  size?: number;
+  state?: "idle" | "sending" | "sent" | "failed";
+}) => {
+  const showArrow = state === "idle";
+  const showCheck = state === "sent";
+  const showError = state === "failed";
+  const isSending = state === "sending";
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <style>{`
+        .send-arrow-icon, .send-check-icon, .send-error-icon {
+          transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+      `}</style>
+      {/* Send arrow */}
+      <g className="send-arrow-icon" style={{
+        opacity: showArrow ? 1 : isSending ? 0.5 : 0,
+        transform: showArrow ? 'scale(1)' : 'scale(0.8)',
+        transformOrigin: 'center'
+      }}>
+        <path
+          d="M9.875 14.125L12.3506 19.6951C12.7184 20.5227 13.9091 20.4741 14.2083 19.6193L18.8139 6.46032C19.0907 5.6695 18.3305 4.90933 17.5397 5.18611L4.38072 9.79174C3.52589 10.0909 3.47731 11.2816 4.30494 11.6494L9.875 14.125ZM9.875 14.125L13.375 10.625"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+      {/* Green checkmark circle */}
+      <g className="send-check-icon" style={{
+        opacity: showCheck ? 1 : 0,
+        transform: showCheck ? 'scale(1)' : 'scale(0.8)',
+        transformOrigin: 'center'
+      }}>
+        <path
+          d="M12 20C7.58172 20 4 16.4182 4 12C4 7.58172 7.58172 4 12 4C16.4182 4 20 7.58172 20 12C20 16.4182 16.4182 20 12 20Z"
+          stroke="#22c55e"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M15 10L11 14.25L9.25 12.25"
+          stroke="#22c55e"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+      {/* Red error circle with exclamation */}
+      <g className="send-error-icon" style={{
+        opacity: showError ? 1 : 0,
+        transform: showError ? 'scale(1)' : 'scale(0.8)',
+        transformOrigin: 'center'
+      }}>
+        <path
+          d="M12 20C7.58172 20 4 16.4182 4 12C4 7.58172 7.58172 4 12 4C16.4182 4 20 7.58172 20 12C20 16.4182 16.4182 20 12 20Z"
+          stroke="#ef4444"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M12 8V12"
+          stroke="#ef4444"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+        <circle cx="12" cy="15" r="0.5" fill="#ef4444" stroke="#ef4444" strokeWidth="1" />
+      </g>
+    </svg>
+  );
+};
+
 // Animated send/checkmark icon (for "Send to Agent" button)
 export const IconSendAnimated = ({ size = 24, sent = false }: { size?: number; sent?: boolean }) => (
   <svg width={size} height={size} viewBox="0 0 22 21" fill="none">
