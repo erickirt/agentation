@@ -23,7 +23,6 @@ export default function APIPage() {
             <li>Sync annotations to a database or backend service</li>
             <li>Build analytics dashboards tracking feedback patterns</li>
             <li>Create custom AI integrations (MCP servers, agent tools)</li>
-            <li>Trigger webhooks or Slack notifications on new feedback</li>
           </ul>
         </section>
 
@@ -70,7 +69,7 @@ export default function APIPage() {
                 <code className="prop-name">onSubmit</code>
                 <span className="prop-type">(output: string, annotations: Annotation[]) =&gt; void</span>
               </div>
-              <p className="prop-desc">Called when "Send to Agent" is clicked. See <a href="/webhooks">Webhooks</a> for details.</p>
+              <p className="prop-desc">Called when "Send to Agent" is clicked</p>
             </div>
             <div className="prop-item">
               <div className="prop-header">
@@ -79,13 +78,6 @@ export default function APIPage() {
                 <span className="prop-default">default: true</span>
               </div>
               <p className="prop-desc">Set to false to prevent writing to clipboard (if handling via onCopy)</p>
-            </div>
-            <div className="prop-item">
-              <div className="prop-header">
-                <code className="prop-name">webhookUrl</code>
-                <span className="prop-type">string</span>
-              </div>
-              <p className="prop-desc">URL to receive POST requests on annotation events. See <a href="/webhooks">Webhooks</a> for details.</p>
             </div>
           </div>
         </section>
@@ -150,16 +142,6 @@ function App() {
   isFixed?: boolean;       // Fixed-position element
   isMultiSelect?: boolean; // Created via drag selection
 };`}
-          />
-        </section>
-
-        <section>
-          <h2>TypeScript</h2>
-          <p>
-            Types are exported for full TypeScript support:
-          </p>
-          <CodeBlock
-            code={`import type { Annotation, AgentationProps } from "agentation";`}
           />
         </section>
 
@@ -301,23 +283,6 @@ curl -N -H "Last-Event-ID: 42" http://localhost:4747/sessions/:id/events`}
           </ul>
         </section>
 
-        <section>
-          <h2 id="webhooks">Webhooks</h2>
-          <p>
-            Configure webhooks to receive notifications when users request agent action:
-          </p>
-          <CodeBlock
-            language="bash"
-            code={`# Single webhook
-export AGENTATION_WEBHOOK_URL=https://your-server.com/webhook
-
-# Multiple webhooks (comma-separated)
-export AGENTATION_WEBHOOKS=https://server1.com/hook,https://server2.com/hook`}
-          />
-          <p style={{ marginTop: "0.75rem", fontSize: "0.8125rem" }}>
-            See <a href="/webhooks">Webhooks</a> for payload format and integration examples.
-          </p>
-        </section>
 
         <section>
           <h2 id="environment-variables">Environment Variables</h2>
@@ -334,16 +299,6 @@ export AGENTATION_WEBHOOKS=https://server1.com/hook,https://server2.com/hook`}
                 <td style={{ padding: "0.375rem 0", borderBottom: "1px solid rgba(0,0,0,0.06)", fontFamily: "monospace", fontSize: "0.6875rem" }}>AGENTATION_STORE</td>
                 <td style={{ padding: "0.375rem 0", borderBottom: "1px solid rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.6)" }}>Storage backend (<code>memory</code> or <code>sqlite</code>)</td>
                 <td style={{ padding: "0.375rem 0", borderBottom: "1px solid rgba(0,0,0,0.06)", fontFamily: "monospace", fontSize: "0.6875rem" }}>sqlite</td>
-              </tr>
-              <tr>
-                <td style={{ padding: "0.375rem 0", borderBottom: "1px solid rgba(0,0,0,0.06)", fontFamily: "monospace", fontSize: "0.6875rem" }}>AGENTATION_WEBHOOK_URL</td>
-                <td style={{ padding: "0.375rem 0", borderBottom: "1px solid rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.6)" }}>Single webhook URL</td>
-                <td style={{ padding: "0.375rem 0", borderBottom: "1px solid rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" }}>-</td>
-              </tr>
-              <tr>
-                <td style={{ padding: "0.375rem 0", borderBottom: "1px solid rgba(0,0,0,0.06)", fontFamily: "monospace", fontSize: "0.6875rem" }}>AGENTATION_WEBHOOKS</td>
-                <td style={{ padding: "0.375rem 0", borderBottom: "1px solid rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.6)" }}>Comma-separated webhook URLs</td>
-                <td style={{ padding: "0.375rem 0", borderBottom: "1px solid rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" }}>-</td>
               </tr>
               <tr>
                 <td style={{ padding: "0.375rem 0", borderBottom: "1px solid rgba(0,0,0,0.06)", fontFamily: "monospace", fontSize: "0.6875rem" }}>AGENTATION_EVENT_RETENTION_DAYS</td>

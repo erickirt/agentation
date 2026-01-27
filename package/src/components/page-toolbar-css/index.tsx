@@ -151,6 +151,17 @@ const DEFAULT_SETTINGS: ToolbarSettings = {
   webhooksEnabled: true,
 };
 
+// Simple URL validation - checks for valid http(s) URL format
+const isValidUrl = (url: string): boolean => {
+  if (!url || !url.trim()) return false;
+  try {
+    const parsed = new URL(url.trim());
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
 // Maps output detail level to React detection mode
 const OUTPUT_TO_REACT_MODE: Record<OutputDetailLevel, ReactComponentMode> = {
   compact: "off",
@@ -2337,7 +2348,7 @@ export function PageFeedbackToolbarCSS({
       >
         {/* Morphing container */}
         <div
-          className={`${styles.toolbarContainer} ${!isDarkMode ? styles.light : ""} ${isActive ? styles.expanded : styles.collapsed} ${showEntranceAnimation ? styles.entrance : ""} ${isDraggingToolbar ? styles.dragging : ""} ${!settings.webhooksEnabled && (settings.webhookUrl || webhookUrl) ? styles.serverConnected : ""}`}
+          className={`${styles.toolbarContainer} ${!isDarkMode ? styles.light : ""} ${isActive ? styles.expanded : styles.collapsed} ${showEntranceAnimation ? styles.entrance : ""} ${isDraggingToolbar ? styles.dragging : ""} ${isValidUrl(settings.webhookUrl) || isValidUrl(webhookUrl || "") ? styles.serverConnected : ""}`}
           onClick={
             !isActive
               ? (e) => {
@@ -2448,7 +2459,7 @@ export function PageFeedbackToolbarCSS({
 
             {/* Send button - only enabled when webhook URL is available */}
             <div
-              className={`${styles.buttonWrapper} ${styles.sendButtonWrapper} ${!settings.webhooksEnabled && (settings.webhookUrl || webhookUrl) ? styles.sendButtonVisible : ""}`}
+              className={`${styles.buttonWrapper} ${styles.sendButtonWrapper} ${isValidUrl(settings.webhookUrl) || isValidUrl(webhookUrl || "") ? styles.sendButtonVisible : ""}`}
             >
               <button
                 className={`${styles.controlButton} ${!isDarkMode ? styles.light : ""}`}
@@ -2456,10 +2467,10 @@ export function PageFeedbackToolbarCSS({
                   e.stopPropagation();
                   sendToWebhook();
                 }}
-                disabled={!hasAnnotations || !(settings.webhookUrl || webhookUrl) || sendState === "sending"}
+                disabled={!hasAnnotations || (!isValidUrl(settings.webhookUrl) && !isValidUrl(webhookUrl || "")) || sendState === "sending"}
                 data-active={sendState === "sent"}
                 data-error={sendState === "failed"}
-                tabIndex={settings.webhookUrl || webhookUrl ? 0 : -1}
+                tabIndex={isValidUrl(settings.webhookUrl) || isValidUrl(webhookUrl || "") ? 0 : -1}
               >
                 <IconSendArrow size={24} state={sendState} />
                 {hasAnnotations && sendState === "idle" && (
