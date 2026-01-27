@@ -503,9 +503,11 @@ export function PageFeedbackToolbarCSS({
   }) => {
     const [isHovering, setIsHovering] = useState(false);
     const [visible, setVisible] = useState(false);
+    const [shouldRender, setShouldRender] = useState(false);
     const [position, setPosition] = useState({ top: 0, right: 0 });
     const triggerRef = useRef<HTMLSpanElement>(null);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const exitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const updatePosition = () => {
       if (triggerRef.current) {
@@ -519,6 +521,11 @@ export function PageFeedbackToolbarCSS({
 
     const handleMouseEnter = () => {
       setIsHovering(true);
+      setShouldRender(true);
+      if (exitTimeoutRef.current) {
+        clearTimeout(exitTimeoutRef.current);
+        exitTimeoutRef.current = null;
+      }
       updatePosition();
       timeoutRef.current = setTimeout(() => {
         setVisible(true);
@@ -532,11 +539,16 @@ export function PageFeedbackToolbarCSS({
         timeoutRef.current = null;
       }
       setVisible(false);
+      // Keep rendered during exit animation
+      exitTimeoutRef.current = setTimeout(() => {
+        setShouldRender(false);
+      }, 150);
     };
 
     useEffect(() => {
       return () => {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        if (exitTimeoutRef.current) clearTimeout(exitTimeoutRef.current);
       };
     }, []);
 
@@ -549,7 +561,7 @@ export function PageFeedbackToolbarCSS({
         >
           {children}
         </span>
-        {isHovering &&
+        {shouldRender &&
           createPortal(
             <div
               style={{
@@ -2280,18 +2292,89 @@ export function PageFeedbackToolbarCSS({
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in inputs
+      const target = e.target as HTMLElement;
+      const isTyping =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
+
       if (e.key === "Escape") {
         if (pendingAnnotation) {
           // Let popup handle
         } else if (isActive) {
+          hideTooltipsUntilMouseLeave();
           setIsActive(false);
+        }
+      }
+
+      // Skip other shortcuts if typing or modifier keys are held
+      if (isTyping || e.metaKey || e.ctrlKey) return;
+
+      // "P" to toggle pause/freeze
+      if (e.key === "p" || e.key === "P") {
+        e.preventDefault();
+        hideTooltipsUntilMouseLeave();
+        toggleFreeze();
+      }
+
+      // "H" to toggle marker visibility
+      if (e.key === "h" || e.key === "H") {
+        if (annotations.length > 0) {
+          e.preventDefault();
+          hideTooltipsUntilMouseLeave();
+          setShowMarkers((prev) => !prev);
+        }
+      }
+
+      // "C" to copy output
+      if (e.key === "c" || e.key === "C") {
+        if (annotations.length > 0) {
+          e.preventDefault();
+          hideTooltipsUntilMouseLeave();
+          copyOutput();
+        }
+      }
+
+      // "X" to clear all
+      if (e.key === "x" || e.key === "X") {
+        if (annotations.length > 0) {
+          e.preventDefault();
+          hideTooltipsUntilMouseLeave();
+          clearAll();
+        }
+      }
+
+      // "S" to send annotations
+      if (e.key === "s" || e.key === "S") {
+        const hasValidWebhook =
+          isValidUrl(settings.webhookUrl) || isValidUrl(webhookUrl || "");
+        if (
+          annotations.length > 0 &&
+          hasValidWebhook &&
+          sendState === "idle"
+        ) {
+          e.preventDefault();
+          hideTooltipsUntilMouseLeave();
+          sendToWebhook();
         }
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isActive, pendingAnnotation]);
+  }, [
+    isActive,
+    pendingAnnotation,
+    annotations.length,
+    settings.webhookUrl,
+    webhookUrl,
+    sendState,
+    sendToWebhook,
+    toggleFreeze,
+    copyOutput,
+    clearAll,
+  ]);
 
   if (!mounted) return null;
 
@@ -2463,7 +2546,7 @@ export function PageFeedbackToolbarCSS({
 
             <div className={styles.buttonWrapper}>
               <button
-                className={`${styles.controlButton} ${!isDarkMode ? styles.light : ""}`}
+                className={`${styles.controlButton} ${!isDarkMode ? styles.light : ""} ${copied ? styles.statusShowing : ""}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   hideTooltipsUntilMouseLeave();
@@ -2485,9 +2568,10 @@ export function PageFeedbackToolbarCSS({
               className={`${styles.buttonWrapper} ${styles.sendButtonWrapper} ${!settings.webhooksEnabled && (isValidUrl(settings.webhookUrl) || isValidUrl(webhookUrl || "")) ? styles.sendButtonVisible : ""}`}
             >
               <button
-                className={`${styles.controlButton} ${!isDarkMode ? styles.light : ""}`}
+                className={`${styles.controlButton} ${!isDarkMode ? styles.light : ""} ${sendState === "sent" || sendState === "failed" ? styles.statusShowing : ""}`}
                 onClick={(e) => {
                   e.stopPropagation();
+                  hideTooltipsUntilMouseLeave();
                   sendToWebhook();
                 }}
                 disabled={
@@ -2496,8 +2580,7 @@ export function PageFeedbackToolbarCSS({
                     !isValidUrl(webhookUrl || "")) ||
                   sendState === "sending"
                 }
-                data-active={sendState === "sent"}
-                data-error={sendState === "failed"}
+                data-no-hover={sendState === "sent" || sendState === "failed"}
                 tabIndex={
                   isValidUrl(settings.webhookUrl) ||
                   isValidUrl(webhookUrl || "")
@@ -2509,19 +2592,15 @@ export function PageFeedbackToolbarCSS({
                 {hasAnnotations && sendState === "idle" && (
                   <span
                     className={`${styles.buttonBadge} ${!isDarkMode ? styles.light : ""}`}
+                    style={{ backgroundColor: settings.annotationColor }}
                   >
                     {annotations.length}
                   </span>
                 )}
               </button>
-              <span
-                className={`${styles.buttonTooltip} ${sendState === "sent" || sendState === "failed" ? styles.tooltipVisible : ""}`}
-              >
-                {sendState === "sent"
-                  ? "Sent!"
-                  : sendState === "failed"
-                    ? "Failed"
-                    : "Send to webhook"}
+              <span className={styles.buttonTooltip}>
+                Send Annotations
+                <span className={styles.shortcut}>S</span>
               </span>
             </div>
 
@@ -2555,6 +2634,16 @@ export function PageFeedbackToolbarCSS({
               >
                 <IconGear size={24} />
               </button>
+              {endpoint && connectionStatus !== "disconnected" && (
+                <span
+                  className={`${styles.mcpIndicator} ${!isDarkMode ? styles.light : ""} ${styles[connectionStatus]} ${showSettings ? styles.hidden : ""}`}
+                  title={
+                    connectionStatus === "connected"
+                      ? "MCP Connected"
+                      : "MCP Connecting..."
+                  }
+                />
+              )}
               <span className={styles.buttonTooltip}>Settings</span>
             </div>
 
@@ -2630,11 +2719,18 @@ export function PageFeedbackToolbarCSS({
                         : "Switch to dark mode"
                     }
                   >
-                    {isDarkMode ? (
-                      <IconSun size={14} />
-                    ) : (
-                      <IconMoon size={14} />
-                    )}
+                    <span className={styles.themeIconWrapper}>
+                      <span
+                        key={isDarkMode ? "sun" : "moon"}
+                        className={styles.themeIcon}
+                      >
+                        {isDarkMode ? (
+                          <IconSun size={20} />
+                        ) : (
+                          <IconMoon size={20} />
+                        )}
+                      </span>
+                    </span>
                   </button>
                 </div>
 
@@ -2784,7 +2880,9 @@ export function PageFeedbackToolbarCSS({
                     >
                       Clear after output
                       <Tooltip content="Automatically clear annotations after copying">
-                        <span className={styles.helpIcon}>
+                        <span
+                          className={`${styles.helpIcon} ${styles["helpIconNudge1-5"]}`}
+                        >
                           <IconHelp size={20} />
                         </span>
                       </Tooltip>
@@ -2828,7 +2926,16 @@ export function PageFeedbackToolbarCSS({
                     onClick={() => setSettingsPage("automations")}
                   >
                     <span>Manage MCP & Webhooks</span>
-                    <IconChevronRight size={16} />
+                    <span className={styles.settingsNavLinkRight}>
+                      {endpoint && connectionStatus !== "disconnected" && (
+                        <span
+                          className={`${styles.mcpNavIndicator} ${styles[connectionStatus]}`}
+                        />
+                      )}
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.5 12.5L12 8L7.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
                   </button>
                 </div>
               </div>
@@ -2852,6 +2959,13 @@ export function PageFeedbackToolbarCSS({
                       className={`${styles.automationHeader} ${!isDarkMode ? styles.light : ""}`}
                     >
                       MCP Connection
+                      <Tooltip content="Connect via Model Context Protocol to let AI agents like Claude Code receive annotations in real-time.">
+                        <span
+                          className={`${styles.helpIcon} ${styles.helpIconNudgeDown}`}
+                        >
+                          <IconHelp size={20} />
+                        </span>
+                      </Tooltip>
                     </span>
                     {endpoint ? (
                       <div
@@ -2877,9 +2991,18 @@ export function PageFeedbackToolbarCSS({
                   </div>
                   <p
                     className={`${styles.automationDescription} ${!isDarkMode ? styles.light : ""}`}
+                    style={{ paddingBottom: 6 }}
                   >
-                    An active MCP connection allows agents to receive and act on
-                    annotations.
+                    MCP connection allows agents to receive and act on
+                    annotations.{" "}
+                    <a
+                      href="https://agentation.dev/mcp"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${styles.learnMoreLink} ${!isDarkMode ? styles.light : ""}`}
+                    >
+                      Learn more
+                    </a>
                   </p>
                 </div>
 
@@ -2892,6 +3015,13 @@ export function PageFeedbackToolbarCSS({
                       className={`${styles.automationHeader} ${!isDarkMode ? styles.light : ""}`}
                     >
                       Webhooks
+                      <Tooltip content="Send annotation data to any URL endpoint when annotations change. Useful for custom integrations.">
+                        <span
+                          className={`${styles.helpIcon} ${styles.helpIconNoNudge}`}
+                        >
+                          <IconHelp size={20} />
+                        </span>
+                      </Tooltip>
                     </span>
                     <div className={styles.autoSendRow}>
                       <span
@@ -2927,6 +3057,11 @@ export function PageFeedbackToolbarCSS({
                     className={`${styles.webhookUrlInput} ${!isDarkMode ? styles.light : ""}`}
                     placeholder="Webhook URL"
                     value={settings.webhookUrl}
+                    style={
+                      {
+                        "--marker-color": settings.annotationColor,
+                      } as React.CSSProperties
+                    }
                     onChange={(e) =>
                       setSettings((s) => ({
                         ...s,
