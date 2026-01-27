@@ -125,11 +125,11 @@ export default function FeaturesPage() {
         </p>
         <div style={{ marginTop: '1rem', fontSize: '0.8125rem', lineHeight: 1.7 }}>
           <p style={{ margin: '0.5rem 0' }}><span style={{ color: 'rgba(0,0,0,0.4)' }}>You:</span> &ldquo;What annotations do I have?&rdquo;</p>
-          <p style={{ margin: '0.5rem 0' }}><span style={{ color: '#4a9eff' }}>Agent:</span> <span style={{ fontFamily: "'SF Mono', monospace" }}>&ldquo;3 annotations: button on /checkout, contrast on /settings, typo on /about.&rdquo;</span></p>
+          <p style={{ margin: '0.5rem 0' }}><span style={{ color: '#4a9eff' }}>Agent:</span> &ldquo;3 annotations: button on /checkout, contrast on /settings, typo on /about.&rdquo;</p>
           <p style={{ margin: '0.5rem 0' }}><span style={{ color: 'rgba(0,0,0,0.4)' }}>You:</span> &ldquo;Fix the button&rdquo;</p>
-          <p style={{ margin: '0.5rem 0' }}><span style={{ color: '#4a9eff' }}>Agent:</span> <span style={{ fontFamily: "'SF Mono', monospace" }}>&ldquo;Left-align or center with the form?&rdquo;</span></p>
+          <p style={{ margin: '0.5rem 0' }}><span style={{ color: '#4a9eff' }}>Agent:</span> &ldquo;Left-align or center with the form?&rdquo;</p>
           <p style={{ margin: '0.5rem 0' }}><span style={{ color: 'rgba(0,0,0,0.4)' }}>You:</span> &ldquo;Center&rdquo;</p>
-          <p style={{ margin: '0.5rem 0' }}><span style={{ color: '#4a9eff' }}>Agent:</span> <span style={{ fontFamily: "'SF Mono', monospace" }}>&ldquo;Done. Marked as resolved.&rdquo;</span></p>
+          <p style={{ margin: '0.5rem 0' }}><span style={{ color: '#4a9eff' }}>Agent:</span> &ldquo;Done. Marked as resolved.&rdquo;</p>
         </div>
         <p style={{ marginTop: '1rem', fontSize: '0.8125rem', color: 'rgba(0,0,0,0.5)' }}>
           Agents can acknowledge, ask questions, resolve with summaries, or dismiss with reasons.

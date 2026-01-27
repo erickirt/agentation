@@ -1261,6 +1261,7 @@ export function SettingsDemo() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [outputDetail, setOutputDetail] = useState(1); // Standard
   const [selectedColor, setSelectedColor] = useState(1); // Blue
+  const [reactEnabled, setReactEnabled] = useState(true);
   const [clearAfterCopy, setClearAfterCopy] = useState(false);
   const [blockInteractions, setBlockInteractions] = useState(false);
   const [cursorPos, setCursorPos] = useState({ x: 190, y: 20 });
@@ -1270,18 +1271,22 @@ export function SettingsDemo() {
   // Refs for measuring element positions
   const containerRef = useRef<HTMLDivElement>(null);
   const cycleBtnRef = useRef<HTMLButtonElement>(null);
+  const reactToggleRef = useRef<HTMLLabelElement>(null);
   const greenColorRef = useRef<HTMLDivElement>(null);
   const clearCheckboxRef = useRef<HTMLSpanElement>(null);
   const blockCheckboxRef = useRef<HTMLSpanElement>(null);
   const themeToggleRef = useRef<HTMLButtonElement>(null);
+  const mcpLinkRef = useRef<HTMLButtonElement>(null);
 
   // Measured positions
   const positionsRef = useRef({
     cycleBtn: { x: 178, y: 82 },
-    greenColor: { x: 106, y: 142 },
-    clearCheckbox: { x: 24, y: 188 },
-    blockCheckbox: { x: 24, y: 210 },
+    reactToggle: { x: 195, y: 112 },
+    greenColor: { x: 106, y: 175 },
+    clearCheckbox: { x: 24, y: 220 },
+    blockCheckbox: { x: 24, y: 242 },
     themeToggle: { x: 194, y: 42 },
+    mcpLink: { x: 105, y: 280 },
   });
 
   // Measure positions
@@ -1299,16 +1304,20 @@ export function SettingsDemo() {
     };
 
     const cyclePos = getCenter(cycleBtnRef);
+    const reactPos = getCenter(reactToggleRef);
     const greenPos = getCenter(greenColorRef);
     const clearPos = getCenter(clearCheckboxRef);
     const blockPos = getCenter(blockCheckboxRef);
     const themePos = getCenter(themeToggleRef);
+    const mcpPos = getCenter(mcpLinkRef);
 
     if (cyclePos) positionsRef.current.cycleBtn = cyclePos;
+    if (reactPos) positionsRef.current.reactToggle = reactPos;
     if (greenPos) positionsRef.current.greenColor = greenPos;
     if (clearPos) positionsRef.current.clearCheckbox = clearPos;
     if (blockPos) positionsRef.current.blockCheckbox = blockPos;
     if (themePos) positionsRef.current.themeToggle = themePos;
+    if (mcpPos) positionsRef.current.mcpLink = mcpPos;
   };
 
   // Measure on mount and resize
@@ -1336,6 +1345,7 @@ export function SettingsDemo() {
       setIsDarkMode(true);
       setOutputDetail(1);
       setSelectedColor(1);
+      setReactEnabled(true);
       setClearAfterCopy(false);
       setBlockInteractions(false);
       setActiveCaption("output");
@@ -1351,7 +1361,17 @@ export function SettingsDemo() {
       // Click output detail to cycle to "Detailed"
       await click();
       setOutputDetail(2);
-      await delay(2800);
+      await delay(2200);
+      if (cancelled) return;
+
+      // Toggle React components off
+      setActiveCaption("react");
+      setCursorPos(pos.reactToggle);
+      await delay(1000);
+      if (cancelled) return;
+      await click();
+      setReactEnabled(false);
+      await delay(2200);
       if (cancelled) return;
 
       // Click green color (4th option)
@@ -1361,7 +1381,7 @@ export function SettingsDemo() {
       if (cancelled) return;
       await click();
       setSelectedColor(3);
-      await delay(2800);
+      await delay(2200);
       if (cancelled) return;
 
       // Click "Clear after output" checkbox
@@ -1371,7 +1391,7 @@ export function SettingsDemo() {
       if (cancelled) return;
       await click();
       setClearAfterCopy(true);
-      await delay(2800);
+      await delay(2200);
       if (cancelled) return;
 
       // Click "Block page interactions" checkbox
@@ -1381,7 +1401,7 @@ export function SettingsDemo() {
       if (cancelled) return;
       await click();
       setBlockInteractions(true);
-      await delay(2800);
+      await delay(2200);
       if (cancelled) return;
 
       // Click theme toggle (dark/light)
@@ -1391,7 +1411,7 @@ export function SettingsDemo() {
       if (cancelled) return;
       await click();
       setIsDarkMode(false);
-      await delay(3000);
+      await delay(2500);
       if (cancelled) return;
 
       // Pause before loop
@@ -1399,7 +1419,7 @@ export function SettingsDemo() {
     };
 
     runAnimation();
-    let interval = setInterval(runAnimation, 26000);
+    let interval = setInterval(runAnimation, 28000);
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
@@ -1408,7 +1428,7 @@ export function SettingsDemo() {
         setTimeout(() => {
           cancelled = false;
           runAnimation();
-          interval = setInterval(runAnimation, 26000);
+          interval = setInterval(runAnimation, 28000);
         }, 100);
       }
     };
@@ -1425,6 +1445,7 @@ export function SettingsDemo() {
 
   const captions: Record<string, string> = {
     output: "Choose how much detail to include in your output.",
+    react: "Include React component names in annotations.",
     color: "Pick a marker colour that stands out against your design.",
     clear: "Automatically clear all annotations after copying.",
     block: "Prevent accidental clicks on page elements while annotating.",
@@ -1463,7 +1484,16 @@ export function SettingsDemo() {
           {/* Output Detail */}
           <div className="sd-section">
             <div className="sd-row">
-              <span className="sd-label">Output Detail</span>
+              <span className="sd-label">
+                Output Detail
+                <span className="sd-help-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <path d="M12 17h.01"/>
+                  </svg>
+                </span>
+              </span>
               <button ref={cycleBtnRef} className="sd-cycle-btn">
                 <span className="sd-cycle-text" key={outputDetail}>{OUTPUT_DETAIL_OPTIONS[outputDetail]}</span>
                 <span className="sd-cycle-dots">
@@ -1472,6 +1502,24 @@ export function SettingsDemo() {
                   ))}
                 </span>
               </button>
+            </div>
+
+            {/* React Components */}
+            <div className="sd-row sd-row-margin-top">
+              <span className="sd-label">
+                React Components
+                <span className="sd-help-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <path d="M12 17h.01"/>
+                  </svg>
+                </span>
+              </span>
+              <label ref={reactToggleRef} className="sd-toggle-switch">
+                <input type="checkbox" checked={reactEnabled} readOnly />
+                <span className={`sd-toggle-slider ${reactEnabled ? "checked" : ""}`} />
+              </label>
             </div>
           </div>
 
@@ -1505,9 +1553,18 @@ export function SettingsDemo() {
                   </svg>
                 )}
               </span>
-              <span className="sd-checkbox-label">Clear after output</span>
+              <span className="sd-checkbox-label">
+                Clear after output
+                <span className="sd-help-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <path d="M12 17h.01"/>
+                  </svg>
+                </span>
+              </span>
             </label>
-            <label className="sd-checkbox-row">
+            <label className="sd-checkbox-row sd-checkbox-row-margin-bottom">
               <span ref={blockCheckboxRef} className={`sd-checkbox ${blockInteractions ? "checked" : ""}`}>
                 {blockInteractions && (
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
@@ -1517,6 +1574,16 @@ export function SettingsDemo() {
               </span>
               <span className="sd-checkbox-label">Block page interactions</span>
             </label>
+          </div>
+
+          {/* Manage MCP & Webhooks */}
+          <div className="sd-section sd-section-extra-padding">
+            <button ref={mcpLinkRef} className="sd-nav-link">
+              <span>Manage MCP & Webhooks</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
           </div>
         </div>
 
