@@ -1775,6 +1775,7 @@ $green: #34c759;
   height: 16px;
   flex-shrink: 0;
   cursor: pointer;
+  transition: opacity 0.15s ease;
 
   input {
     opacity: 0;
