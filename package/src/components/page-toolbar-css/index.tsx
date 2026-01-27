@@ -2102,6 +2102,11 @@ export function PageFeedbackToolbarCSS({
     // Show result
     setSendState(success ? "sent" : "failed");
     setTimeout(() => setSendState("idle"), 2500);
+
+    // Clear annotations if send succeeded and autoClearAfterCopy is enabled
+    if (success && settings.autoClearAfterCopy) {
+      setTimeout(() => clearAll(), 500);
+    }
   }, [
     onSubmit,
     fireWebhook,
@@ -2109,6 +2114,8 @@ export function PageFeedbackToolbarCSS({
     pathname,
     settings.outputDetail,
     effectiveReactMode,
+    settings.autoClearAfterCopy,
+    clearAll,
   ]);
 
   // Toolbar dragging - mousemove and mouseup
