@@ -2545,6 +2545,16 @@ export function PageFeedbackToolbarCSS({
               >
                 <IconGear size={24} />
               </button>
+              {endpoint && connectionStatus !== "disconnected" && !showSettings && (
+                <span
+                  className={`${styles.mcpIndicator} ${!isDarkMode ? styles.light : ""} ${styles[connectionStatus]}`}
+                  title={
+                    connectionStatus === "connected"
+                      ? "MCP Connected"
+                      : "MCP Connecting..."
+                  }
+                />
+              )}
               <span className={styles.buttonTooltip}>Settings</span>
             </div>
 
@@ -2818,7 +2828,16 @@ export function PageFeedbackToolbarCSS({
                     onClick={() => setSettingsPage("automations")}
                   >
                     <span>Manage MCP & Webhooks</span>
-                    <IconChevronRight size={16} />
+                    <span className={styles.settingsNavLinkRight}>
+                      {endpoint && connectionStatus !== "disconnected" && (
+                        <span
+                          className={`${styles.mcpNavIndicator} ${styles[connectionStatus]}`}
+                        />
+                      )}
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.5 12.5L12 8L7.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
                   </button>
                 </div>
               </div>
@@ -2842,6 +2861,9 @@ export function PageFeedbackToolbarCSS({
                       className={`${styles.automationHeader} ${!isDarkMode ? styles.light : ""}`}
                     >
                       MCP Connection
+                      <span className={styles.helpIcon}>
+                        <IconHelp size={20} />
+                      </span>
                     </span>
                     {endpoint ? (
                       <div
@@ -2867,6 +2889,7 @@ export function PageFeedbackToolbarCSS({
                   </div>
                   <p
                     className={`${styles.automationDescription} ${!isDarkMode ? styles.light : ""}`}
+                    style={{ paddingBottom: 6 }}
                   >
                     An active MCP connection allows agents to receive and act on
                     annotations.
@@ -2882,6 +2905,9 @@ export function PageFeedbackToolbarCSS({
                       className={`${styles.automationHeader} ${!isDarkMode ? styles.light : ""}`}
                     >
                       Webhooks
+                      <span className={styles.helpIcon}>
+                        <IconHelp size={20} />
+                      </span>
                     </span>
                     <div className={styles.autoSendRow}>
                       <span
@@ -2917,6 +2943,11 @@ export function PageFeedbackToolbarCSS({
                     className={`${styles.webhookUrlInput} ${!isDarkMode ? styles.light : ""}`}
                     placeholder="Webhook URL"
                     value={settings.webhookUrl}
+                    style={
+                      {
+                        "--marker-color": settings.annotationColor,
+                      } as React.CSSProperties
+                    }
                     onChange={(e) =>
                       setSettings((s) => ({
                         ...s,
