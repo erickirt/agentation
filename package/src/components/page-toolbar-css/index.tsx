@@ -144,7 +144,7 @@ const DEFAULT_SETTINGS: ToolbarSettings = {
   outputDetail: "standard",
   autoClearAfterCopy: false,
   annotationColor: "#3c82f7",
-  blockInteractions: false,
+  blockInteractions: true,
   reactEnabled: true,
   markerClickBehavior: "edit",
   webhookUrl: "",

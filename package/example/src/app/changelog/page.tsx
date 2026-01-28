@@ -42,6 +42,7 @@ const releases: Release[] = [
       { type: "added", text: "Toolbar position persists in localStorage — drag it once, it stays where you put it" },
       { type: "improved", text: "Component detection adapts to output detail level (Compact, Standard, Detailed, Forensic)" },
       { type: "improved", text: "Cursor styles in settings panel — I-beam for text inputs, pointer for clickable items" },
+      { type: "improved", text: "\"Block page interactions\" now enabled by default — prevents accidental clicks while annotating (can be toggled off in settings)" },
       { type: "fixed", text: "SVG icons broken by host page fill styles — now uses attribute selectors to avoid conflicts" },
     ],
   },
