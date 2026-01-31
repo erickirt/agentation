@@ -1,4 +1,4 @@
-# agentation
+# Agentation
 
 Agentation is an agent-agnostic visual feedback tool. Click elements on your page, add notes, and copy structured output that helps AI coding agents find the exact code you're referring to.
 
