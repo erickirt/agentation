@@ -72,6 +72,7 @@ The MCP server exposes these tools to AI agents:
 | `agentation_dismiss` | Dismiss an annotation with a reason |
 | `agentation_reply` | Add a reply to an annotation thread |
 | `agentation_wait_for_action` | Block until user clicks "Send to Agent" |
+| `agentation_watch_annotations` | Block until new annotations appear, then return batch |
 
 ## HTTP API
 
@@ -95,11 +96,31 @@ The HTTP server provides a REST API for the browser toolbar:
 
 ### Events (SSE)
 - `GET /sessions/:id/events` - Session event stream
-- `GET /events?domain=...` - Domain-wide event stream
+- `GET /events` - Global event stream (optionally filter with `?domain=...`)
 
 ### Health
 - `GET /health` - Health check
 - `GET /status` - Server status
+
+## Hands-Free Mode
+
+Use `agentation_watch_annotations` in a loop for automatic feedback processing -- no need for the user to click "Send to Agent":
+
+1. Agent calls `agentation_watch_annotations` (blocks until annotations appear)
+2. Annotations arrive -- agent receives batch after collection window
+3. Agent processes each annotation:
+   - `agentation_acknowledge` -- mark as seen
+   - Make code changes
+   - `agentation_resolve` -- mark as done with summary
+4. Agent calls `agentation_watch_annotations` again (loop)
+
+Example CLAUDE.md instructions:
+
+```markdown
+When I say "watch mode", call agentation_watch_annotations in a loop.
+For each annotation: acknowledge it, make the fix, then resolve it with a summary.
+Continue watching until I say stop or timeout is reached.
+```
 
 ## Webhooks
 

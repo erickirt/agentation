@@ -123,6 +123,12 @@ const WaitForActionSchema = z.object({
   timeoutSeconds: z.number().optional().default(60).describe("Timeout in seconds (default: 60, max: 300)"),
 });
 
+const WatchAnnotationsSchema = z.object({
+  sessionId: z.string().optional().describe("Optional session ID to filter. If not provided, watches ALL sessions."),
+  batchWindowSeconds: z.number().optional().default(10).describe("Seconds to wait after first annotation before returning batch (default: 10, max: 60)"),
+  timeoutSeconds: z.number().optional().default(120).describe("Max seconds to wait for first annotation (default: 120, max: 300)"),
+});
+
 // -----------------------------------------------------------------------------
 // Tool Definitions
 // -----------------------------------------------------------------------------
@@ -262,6 +268,32 @@ export const TOOLS = [
         timeoutSeconds: {
           type: "number",
           description: "Timeout in seconds (default: 60, max: 300)",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "agentation_watch_annotations",
+    description:
+      "Block until new annotations appear, then collect a batch and return all pending annotations. " +
+      "Unlike wait_for_action (which requires the user to click 'Send to Agent'), this triggers " +
+      "automatically when annotations are created. After detecting the first new annotation, waits " +
+      "for a batch window to collect more before returning. Use in a loop for hands-free processing.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        sessionId: {
+          type: "string",
+          description: "Optional session ID to filter. If not provided, watches ALL sessions.",
+        },
+        batchWindowSeconds: {
+          type: "number",
+          description: "Seconds to wait after first annotation before returning batch (default: 10, max: 60)",
+        },
+        timeoutSeconds: {
+          type: "number",
+          description: "Max seconds to wait for first annotation (default: 120, max: 300)",
         },
       },
       required: [],
@@ -439,6 +471,144 @@ function waitForActionEvent(
   });
 }
 
+/**
+ * Result from watchForAnnotations
+ */
+type WatchAnnotationsResult =
+  | { type: "annotations"; annotations: Annotation[]; sessions: string[] }
+  | { type: "timeout" }
+  | { type: "error"; message: string };
+
+/**
+ * Watch for new annotation.created events via SSE from the HTTP server.
+ * When the first annotation is detected, waits for a batch window to collect
+ * additional annotations, then fetches all pending annotations via HTTP.
+ *
+ * This is the "automatic" counterpart to waitForActionEvent -- instead of
+ * waiting for an explicit user action, it triggers on any new annotation.
+ */
+function watchForAnnotations(
+  sessionId: string | undefined,
+  batchWindowMs: number,
+  timeoutMs: number
+): Promise<WatchAnnotationsResult> {
+  return new Promise((resolve) => {
+    let aborted = false;
+    const controller = new AbortController();
+    let batchTimeout: ReturnType<typeof setTimeout> | null = null;
+    const detectedSessions = new Set<string>();
+
+    const cleanup = () => {
+      aborted = true;
+      controller.abort();
+      if (batchTimeout) clearTimeout(batchTimeout);
+    };
+
+    // Set overall timeout
+    const timeoutId = setTimeout(() => {
+      cleanup();
+      resolve({ type: "timeout" });
+    }, timeoutMs);
+
+    // Connect to SSE endpoint with agent=true to be counted as an agent listener
+    const sseUrl = sessionId
+      ? `${httpBaseUrl}/sessions/${sessionId}/events?agent=true`
+      : `${httpBaseUrl}/events?agent=true`;
+
+    const sseHeaders: Record<string, string> = { Accept: "text/event-stream" };
+    if (apiKey) {
+      sseHeaders["x-api-key"] = apiKey;
+    }
+
+    fetch(sseUrl, {
+      signal: controller.signal,
+      headers: sseHeaders,
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          clearTimeout(timeoutId);
+          cleanup();
+          resolve({ type: "error", message: `HTTP server returned ${res.status}: ${res.statusText}` });
+          return;
+        }
+        if (!res.body) {
+          clearTimeout(timeoutId);
+          cleanup();
+          resolve({ type: "error", message: "No response body from SSE endpoint" });
+          return;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (!aborted) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const event = JSON.parse(line.slice(6));
+                if (event.type === "annotation.created") {
+                  // If filtering by session, check it matches
+                  if (sessionId && event.sessionId !== sessionId) {
+                    continue;
+                  }
+
+                  detectedSessions.add(event.sessionId);
+
+                  // First annotation detected - start batch window
+                  if (!batchTimeout) {
+                    batchTimeout = setTimeout(async () => {
+                      clearTimeout(timeoutId);
+                      cleanup();
+
+                      // Fetch all pending annotations via HTTP
+                      try {
+                        const pending = await httpGet<PendingResponse>("/pending");
+                        resolve({
+                          type: "annotations",
+                          annotations: pending.annotations,
+                          sessions: Array.from(detectedSessions),
+                        });
+                      } catch (err) {
+                        resolve({
+                          type: "error",
+                          message: `Failed to fetch pending annotations: ${(err as Error).message}`,
+                        });
+                      }
+                    }, batchWindowMs);
+                  }
+                }
+              } catch {
+                // Ignore parse errors for individual events
+              }
+            }
+          }
+        }
+      })
+      .catch((err) => {
+        // Connection error or aborted
+        if (!aborted) {
+          clearTimeout(timeoutId);
+          const message = err instanceof Error ? err.message : "Unknown connection error";
+          if (message.includes("ECONNREFUSED") || message.includes("fetch failed")) {
+            resolve({ type: "error", message: `Cannot connect to HTTP server at ${httpBaseUrl}. Is the agentation server running?` });
+          } else if (message.includes("abort")) {
+            resolve({ type: "timeout" });
+          } else {
+            resolve({ type: "error", message: `Connection error: ${message}` });
+          }
+        }
+      });
+  });
+}
+
 export async function handleTool(name: string, args: unknown): Promise<ToolResult> {
   switch (name) {
     case "agentation_list_sessions": {
@@ -596,6 +766,47 @@ export async function handleTool(name: string, args: unknown): Promise<ToolResul
             timeout: true,
             message: `No action requested within ${timeoutSeconds} seconds`,
             sessionId: sessionId ?? "any",
+          });
+        case "error":
+          return error(result.message);
+      }
+    }
+
+    case "agentation_watch_annotations": {
+      const parsed = WatchAnnotationsSchema.parse(args);
+      const sessionId = parsed.sessionId;
+      const batchWindowSeconds = Math.min(60, Math.max(1, parsed.batchWindowSeconds ?? 10));
+      const timeoutSeconds = Math.min(300, Math.max(1, parsed.timeoutSeconds ?? 120));
+
+      const result = await watchForAnnotations(
+        sessionId,
+        batchWindowSeconds * 1000,
+        timeoutSeconds * 1000
+      );
+
+      switch (result.type) {
+        case "annotations":
+          return success({
+            timeout: false,
+            count: result.annotations.length,
+            sessions: result.sessions,
+            annotations: result.annotations.map((a) => ({
+              id: a.id,
+              comment: a.comment,
+              element: a.element,
+              elementPath: a.elementPath,
+              url: a.url,
+              intent: a.intent,
+              severity: a.severity,
+              timestamp: a.timestamp,
+              nearbyText: a.nearbyText,
+              reactComponents: a.reactComponents,
+            })),
+          });
+        case "timeout":
+          return success({
+            timeout: true,
+            message: `No new annotations within ${timeoutSeconds} seconds`,
           });
         case "error":
           return error(result.message);

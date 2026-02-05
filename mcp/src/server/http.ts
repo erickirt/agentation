@@ -590,19 +590,16 @@ function sendSSEEvent(res: ServerResponse, event: AFSEvent): void {
 }
 
 /**
- * GET /events?domain=... - Site-level SSE stream.
+ * GET /events - Global SSE stream.
  *
- * Aggregates events from all sessions matching the domain.
+ * Optionally filter by domain: GET /events?domain=example.com
+ * Without domain, streams ALL events across all sessions.
  * Useful for agents that need to track feedback across page navigations.
  */
 const globalSseHandler: RouteHandler = async (req, res) => {
   const url = new URL(req.url || "/", "http://localhost");
   const domain = url.searchParams.get("domain");
   const isAgent = url.searchParams.get("agent") === "true";
-
-  if (!domain) {
-    return sendError(res, 400, "domain query parameter required");
-  }
 
   // Set up SSE headers
   res.writeHead(200, {
@@ -619,40 +616,47 @@ const globalSseHandler: RouteHandler = async (req, res) => {
   }
 
   // Send initial comment to establish connection
-  res.write(`: connected to domain ${domain}\n\n`);
+  res.write(`: connected${domain ? ` to domain ${domain}` : ""}\n\n`);
 
-  // Send all pending annotations for this domain on connect (initial sync)
+  // Send all pending annotations on connect (initial sync for agents)
   if (isAgent) {
     let syncCount = 0;
     const sessions = listSessions();
     for (const session of sessions) {
       try {
-        const sessionHost = new URL(session.url).host;
-        if (sessionHost === domain) {
-          const pending = getPendingAnnotations(session.id);
-          for (const annotation of pending) {
-            // Send as annotation.created events so agents see existing annotations
-            // Use sequence 0 for initial sync events (they're historical, not new)
-            sendSSEEvent(res, {
-              type: "annotation.created",
-              sessionId: session.id,
-              timestamp: annotation.createdAt || new Date().toISOString(),
-              sequence: 0,
-              payload: annotation,
-            });
-            syncCount++;
-          }
+        // If domain is specified, filter by it; otherwise include all sessions
+        if (domain) {
+          const sessionHost = new URL(session.url).host;
+          if (sessionHost !== domain) continue;
+        }
+        const pending = getPendingAnnotations(session.id);
+        for (const annotation of pending) {
+          // Send as annotation.created events so agents see existing annotations
+          // Use sequence 0 for initial sync events (they're historical, not new)
+          sendSSEEvent(res, {
+            type: "annotation.created",
+            sessionId: session.id,
+            timestamp: annotation.createdAt || new Date().toISOString(),
+            sequence: 0,
+            payload: annotation,
+          });
+          syncCount++;
         }
       } catch {
         // Invalid URL, skip
       }
     }
     // Send a sync.complete event so agents know initial sync is done
-    res.write(`event: sync.complete\ndata: ${JSON.stringify({ domain, count: syncCount, timestamp: new Date().toISOString() })}\n\n`);
+    res.write(`event: sync.complete\ndata: ${JSON.stringify({ domain: domain ?? "all", count: syncCount, timestamp: new Date().toISOString() })}\n\n`);
   }
 
-  // Subscribe to all events, filter by domain
+  // Subscribe to all events, optionally filter by domain
   const unsubscribe = eventBus.subscribe((event: AFSEvent) => {
+    if (!domain) {
+      // No domain filter -- stream all events
+      sendSSEEvent(res, event);
+      return;
+    }
     const session = getSession(event.sessionId);
     if (session) {
       try {
