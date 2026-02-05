@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/agentation)](https://www.npmjs.com/package/agentation)
 [![downloads](https://img.shields.io/npm/dm/agentation)](https://www.npmjs.com/package/agentation)
 
-Agentation is an agent-agnostic visual feedback tool. Click elements on your page, add notes, and copy structured output that helps AI coding agents find the exact code you're referring to.
+**[Agentation](https://agentation.dev)** is an agent-agnostic visual feedback tool. Click elements on your page, add notes, and copy structured output that helps AI coding agents find the exact code you're referring to.
 
 ## Install
 
@@ -131,4 +131,5 @@ Full documentation at [agentation.dev](https://agentation.dev)
 ## License
 
 © 2026 Benji Taylor
+
 Licensed under PolyForm Shield 1.0.0
