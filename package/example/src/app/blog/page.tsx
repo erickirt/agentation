@@ -40,7 +40,7 @@ export default function BlogPage() {
               >
                 <div
                   style={{
-                    aspectRatio: "16 / 9",
+                    aspectRatio: "3600 / 1890",
                     background: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
                     overflow: "hidden",
                   }}
