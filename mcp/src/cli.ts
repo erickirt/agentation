@@ -185,7 +185,13 @@ async function runDoctor() {
     results.push({ name: "Claude Code config", status: "warn", message: "No config found at ~/.claude.json. Run: claude mcp add agentation -- npx agentation-mcp server" });
   }
 
-  // Check 3: Server connectivity (try default port)
+  // Check 3: Stale config at old (wrong) path
+  const oldConfigPath = path.join(homeDir, ".claude", "claude_code_config.json");
+  if (fs.existsSync(oldConfigPath)) {
+    results.push({ name: "Stale config", status: "warn", message: `${oldConfigPath} exists but Claude Code doesn't read this file. Safe to delete.` });
+  }
+
+  // Check 4: Server connectivity (try default port)
   try {
     const response = await fetch("http://localhost:4747/health", { signal: AbortSignal.timeout(2000) });
     if (response.ok) {
